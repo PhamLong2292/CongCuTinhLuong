@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.IO;
+using static System.Net.Mime.MediaTypeNames;
+using System.Reflection;
 
 namespace ADMIN.WebParts
 {
@@ -78,11 +80,11 @@ namespace ADMIN.WebParts
                     "              <div class =\"col-sm-12\">" +
                     "                  <label style=\"font-weight:bold;margin-bottom:5px\">Mức lương đóng bảo hiểm </label><br>\r\n                 " +
                     "                  <div class =\"col-sm-2\">" +
-                    "                      <label class=\"radio-inline\"><input id = \"rdbsChinhThuc\" type = \"radio\" name=\"optradioHl1\" value= \"1\" checked>Trên lương chính thức</label> " +
+                    "                      <label class=\"radio-inline\"><input id = \"rdbsChinhThuc\" type = \"radio\"  onclick='ShowInput();' name=\"optradioHl1\" value= \"1\" checked>Trên lương chính thức</label> " +
                     "                  </div>\r\n    "+
                     "                  <div class =\"col-sm-6\">" +
                     "                      <div class =\"col-sm-2\">" +
-                    "                           <label class=\"radio-inline\"><input id = \"rdbsKhac\" type = \"radio\" name=\"optradioHl1\" value=\"2\">Khác</label> " +
+                    "                           <label class=\"radio-inline\"><input id = \"rdbsKhac\" type = \"radio\" onclick='ShowInput();' name=\"optradioHl1\" value=\"2\">Khác</label> " +
                     "                      </div>\r\n    "+
                     "                      <div class =\"col-sm-4\">" +
                     "                           <input type=\"text\" id=\"txtThuKhac\" name=\"luong\" value=\"\" placeholder=\"VNĐ\" class=\"border-hover\" disabled > "+
@@ -140,7 +142,7 @@ namespace ADMIN.WebParts
                     "      callGallAlert(AjaxOut.InfoMessage);\r\n           " +
                     "      return;\r\n       " +
                     "      }\r\n       " +
-                    "      document.getElementById('divDataContent').innerHTML=AjaxOut.HtmlContent;\r\n   " +
+                    "      document.getElementById('TabCHuyenDoi').innerHTML=AjaxOut.HtmlContent;\r\n   " +
                     "   }\r\n" +
                     "   function GrossToNet()\r\n   " +
                     "   {\r\n" +
@@ -173,6 +175,26 @@ namespace ADMIN.WebParts
                     "      }\r\n       " +
                     "      $('#TabCHuyenDoi').html(AjaxOut.HtmlContent);\r\n" +
                     "   }\r\n" +
+                    "   function ServerSideDelete(Id){\r\n" +     
+                    "       RenderInfo=CreateRenderInfo();\r\n" +
+                    "       AjaxOut = ADMIN.WebParts.TinhLuong.ServerSideDelete(RenderInfo, Id).value;\r\n" +
+                    "       if(AjaxOut.Error)\r\n" +
+                    "       {\r\n" +
+                    "           callGallAlert(AjaxOut.InfoMessage);\r\n" +
+                    "           return;\r\n" +
+                    "       }\r\n" +
+                    "       $('#TabCHuyenDoi').html(AjaxOut.HtmlContent);\r\n" +
+                    "   }\r\n" +
+                    "   function ShowInput(){\r\n" +
+                    "       if( $('#rdbsChinhThuc').is(':checked')) \r\n" +
+                    "           {\r\n" +
+                    "               txtThuKhac.disabled=true;\r\n" +
+                    "           }\r\n" +
+                    "       else \r\n" +
+                    "           {\r\n" +
+                    "               txtThuKhac.disabled=false;\r\n" +
+                    "           }\r\n" +
+                    "   }\r\n" +
                     "</script>\r\n");
             }
             catch (Exception ex)
@@ -182,7 +204,7 @@ namespace ADMIN.WebParts
             }
             return ajaxOut;
         }
-
+     
         [AjaxMethod(HttpSessionStateRequirement.ReadWrite)]
         public static AjaxOut ServerSideDrawSearchResult(RenderInfoCls ORenderInfo)
         {
@@ -191,18 +213,18 @@ namespace ADMIN.WebParts
             {
                 SiteParam OSiteParam = WebEnvironments.CreateSiteParam(ORenderInfo);
 
-                List<BangChuyenDoiCls> OChuyenDois = WebSessionUtility.GetSession(OSiteParam, "BangChuyenDois") as List<BangChuyenDoiCls>;
+                List<BangChuyenDoiCls> OChuyenDois = WebSessionUtility.GetSession(OSiteParam, "BangChuyenDois") as List<BangChuyenDoiCls>;          
                 string text =
                     "   <div class=\"search-result-info\"></div>\r\n" +
                     "   <div class=\"table-responsive\"> \r\n" +
                     "       <table class=\"table table-bordered table-hover dataTables-autosort footable-loaded footable\"> \r\n" +
                     "           <thead> \r\n" +
                     "               <tr> \r\n" +
-                    "                   <th style=\"width:50px\">STT</th> \r\n " +
                     "                   <th style=\"min-width:150px\">Lương Gross</th> \r\n" +
                     "                   <th style=\"min-width:150px\">Bảo hiểm</th> \r\n" +
                     "                   <th style=\"min-width:150px\">Thuế TNCN</th> \r\n" +
                     "                   <th style=\"min-width:150px\">Lương Net</th> \r\n" +
+                    "                   <th width=60 style=\"\"></th> \r\n" +
                     "               </tr> \r\n" +
                     "           </thead> \r\n" +
                     "           <tbody> \r\n";
@@ -210,21 +232,21 @@ namespace ADMIN.WebParts
                 {
                     text +=
                     "               <tr> \r\n" +
-                    "                 <td style=\"text-align: center;\">" + (i + 1) + "</td> \r\n" +
                     "                 <td>" + OChuyenDois[i].LuongGross.ToString("N0") + "</td> \r\n" +
                     "                 <td>" + OChuyenDois[i].BaoHiem.ToString("N0") + "</td> \r\n" +
                     "                 <td>" + OChuyenDois[i].ThueTNCN.ToString("N0") + "</td> \r\n " +
                     "                 <td>" + OChuyenDois[i].LuongNet.ToString("N0") + "</td> \r\n "+
+                    "                 <td class=\"td-center\" style=\"text-align:center;\"><a id=\"btnXoa\" title=\"" + "Xóa bảng giá" + "\" href=\"javascript:ServerSideDelete('" + OChuyenDois[i].ID + "');\"><i class=\"" + WebScreen.GetDeleteGridIcon() + "\"></i></a></td> \r\n" +
                     "               </tr> \r\n";
                 }
-                text += 
-                    "           </tbody> \r\n     " +
-                    "       </table></br>\r\n " +
-                    "   </div>\r\n";
-                text += 
-                    "   <div style=\"font-weight:bold;margin-bottom:5px\">Diễn giải chi tiết </div>\r\n                 ";
-                text += 
-                    "   <div class=\"search-result-info\"></div>\r\n" +
+                text +=
+                "           </tbody> \r\n     " +
+                "       </table></br>\r\n " +
+                "   </div>\r\n";
+                text +=
+                "   <div style=\"font-weight:bold;margin-bottom:5px\">Diễn giải chi tiết </div>\r\n                 ";
+                text +=
+                "   <div class=\"search-result-info\"></div>\r\n" +
                     "   <div class=\"table-responsive\"> \r\n" +
                     "       <table class=\"table table-bordered table-hover dataTables-autosort footable-loaded footable\"> \r\n" +
                     "           <tbody> \r\n";
@@ -233,43 +255,43 @@ namespace ADMIN.WebParts
                 {
                     text +=
                     "               <tr> \r\n" +
-                    "                 <th>Lương Gross</th>\r\n" +
+                    "                 <th style='text-align: center; vertical-align: middle;'>Lương Gross</th>\r\n" +
                     "                 <td>"+ OChuyenDois[i].LuongGross.ToString("N0") +"</td> \r\n" +
                     "               </tr> \r\n"+
                     "               <tr> \r\n" +
-                    "                 <th>Bảo hiểm xã hội(8%)</th>\r\n" +
+                    "                 <th  style='text-align: center; vertical-align: middle;'>Bảo hiểm xã hội(8%)</th>\r\n" +
                     "                 <td>" + OChuyenDois[i].BHXH.ToString("N0") + "</td> \r\n" +
                     "               </tr> \r\n" +
                     "               <tr> \r\n" +
-                    "                 <th>Bảo hiểm y tế (1.5%)\t</th>\r\n" +
+                    "                 <th  style='text-align: center; vertical-align: middle;'>Bảo hiểm y tế (1.5%)\t</th>\r\n" +
                     "                 <td>" + OChuyenDois[i].BHYT.ToString("N0") + "</td> \r\n" +
                     "               </tr> \r\n" +
                     "               <tr> \r\n" +
-                    "                 <th>Bảo hiểm thất nghiệp (1%)</th>\r\n" +
+                    "                 <th  style='text-align: center; vertical-align: middle;'>Bảo hiểm thất nghiệp (1%)</th>\r\n" +
                     "                 <td>" + OChuyenDois[i].BHTN.ToString("N0") + "</td> \r\n" +
                     "               </tr> \r\n" +
                     "               <tr> \r\n" +
-                    "                 <th>Thu nhập trước thuế</th>\r\n" +
+                    "                 <th  style='text-align: center; vertical-align: middle;'>Thu nhập trước thuế</th>\r\n" +
                     "                 <td>" + OChuyenDois[i].ThuNhapTT.ToString("N0") + "</td> \r\n" +
                     "               </tr> \r\n" +
                     "               <tr> \r\n" +
-                    "                 <th>Giảm trừ gia cảnh bản thân</th>\r\n" +
+                    "                 <th  style='text-align: center; vertical-align: middle;'>Giảm trừ gia cảnh bản thân</th>\r\n" +
                     "                 <td>-11,000,000</td> \r\n" +
                     "               </tr> \r\n" +
                     "               <tr> \r\n" +
-                    "                 <th>Giảm trừ gia cảnh người phụ thuộc</th>\r\n" +
+                    "                 <th style='text-align: center; vertical-align: middle;'>Giảm trừ gia cảnh người phụ thuộc</th>\r\n" +
                     "                 <td>" + OChuyenDois[i].SNPT.ToString("N0") + "</td> \r\n" +
                     "               </tr> \r\n" +
                     "               <tr> \r\n" +
-                    "                 <th>Thu nhập chịu thuế</th>\r\n" +
+                    "                 <th style='text-align: center; vertical-align: middle;'>Thu nhập chịu thuế</th>\r\n" +
                     "                 <td>" + OChuyenDois[i].ThuNhapCT.ToString("N0") + "</td> \r\n" +
                     "               </tr> \r\n" +
                     "               <tr> \r\n" +
-                    "                 <th>Thuế thu nhập cá nhân(*)</th>\r\n" +
+                    "                 <th style='text-align: center; vertical-align: middle;'>Thuế thu nhập cá nhân(*)</th>\r\n" +
                     "                 <td>" + OChuyenDois[i].ThueTNCN.ToString("N0") + "</td> \r\n" +
                     "               </tr> \r\n" +
                     "               <tr> \r\n" +
-                    "                 <th>Lương NET</th>\r\n" +
+                    "                 <th style='text-align: center; vertical-align: middle;'>Lương NET</th>\r\n" +
                     "                 <td>" + OChuyenDois[i].LuongNet.ToString("N0") + "</td> \r\n" +
                     "               </tr> \r\n";
                 }
@@ -317,7 +339,6 @@ namespace ADMIN.WebParts
                 {
                     BHXH = 20 * 1490000 * 8 / 100;
                 }
-
 
                 if (thunhap / 1490000 < 20)
                 {
@@ -367,7 +388,7 @@ namespace ADMIN.WebParts
                     {
                         ThueTNCN = ThuNhapCT * 25 / 100 - 3250000;
                     }
-                    else if (ThuNhapCT > 52000000 && ThuNhapCT < 800000000)
+                    else if (ThuNhapCT > 52000000 && ThuNhapCT < 80000000)
                     {
                         ThueTNCN = ThuNhapCT * 30 / 100 - 5850000;
                     }
@@ -379,6 +400,11 @@ namespace ADMIN.WebParts
              
                 LuongNet = thunhap - BaoHiem - ThueTNCN;
                 List<BangChuyenDoiCls> OChuyenDois = WebSessionUtility.GetSession(OSiteParam, "BangChuyenDois") as List<BangChuyenDoiCls>;
+                if (OChuyenDois.Count >= 1)
+                {
+                    BangChuyenDoiCls chuyendoi = OChuyenDois.FirstOrDefault(o => o.ID == OChuyenDois[0].ID);
+                    OChuyenDois.Remove(chuyendoi);
+                }
                 OChuyenDois.Add(new BangChuyenDoiCls()
                 {       
                     ID = Guid.NewGuid().ToString(),
@@ -426,9 +452,10 @@ namespace ADMIN.WebParts
                 double TNTT = 0;
                 double TNQD = 0;
                 TNQD = thunhap - (11000000 + snpt * 4400000);
-                if(thunhap < 11000000)
+                if(TNQD < 0)
                 {
-                    TNQD = 0; TNTT = 0 ; ThueTNCN = 0;
+                    TNQD = 0; TNTT = thunhap ; ThueTNCN = 0;
+                    GRGD = thunhap / 0.895;
                 }   
                 else
                 {
@@ -489,9 +516,9 @@ namespace ADMIN.WebParts
                     {
                         ThueTNCN = TNTT * 35 / 100 - 9850000;
                     }
-                }
 
-                GRGD = (TNTT + 11000000 + snpt* 4400000) / 0.895;
+                    GRGD = (TNTT + 11000000 + snpt * 4400000) / 0.895;
+                }
                 //BaoHiem
 
                 if (GRGD / 1490000 < 20)
@@ -520,21 +547,49 @@ namespace ADMIN.WebParts
                 {
                     BHTN = 20 * khuvuc * 1 / 100;
                 }
+                BaoHiem = BHTN + BHYT + BHXH;
                 List<BangChuyenDoiCls> OChuyenDois = WebSessionUtility.GetSession(OSiteParam, "BangChuyenDois") as List<BangChuyenDoiCls>;
+                if ( OChuyenDois.Count >= 1)
+                {
+                    BangChuyenDoiCls chuyendoi = OChuyenDois.FirstOrDefault(o => o.ID == OChuyenDois[0].ID);
+                    OChuyenDois.Remove(chuyendoi);
+                }
                 OChuyenDois.Add(new BangChuyenDoiCls()
                 {
                     ID = Guid.NewGuid().ToString(),
-                    BHXH = BHXH,
-                    BHYT = BHYT,
-                    BHTN = BHTN,
+                    BHXH = - BHXH,
+                    BHYT = - BHYT,
+                    BHTN = - BHTN,
                     ThuNhapCT = ThuNhapCT,
                     ThuNhapTT = thunhap - BaoHiem,
                     LuongGross = GRGD,
-                    BaoHiem = BaoHiem,
+                    BaoHiem = - BaoHiem,
                     ThueTNCN = ThueTNCN,
                     LuongNet = thunhap,
                     SNPT = snpt*4400000,
                 });
+                RetAjaxOut.HtmlContent = ServerSideDrawSearchResult(ORenderInfo).HtmlContent;
+            }
+            catch (Exception ex)
+            {
+                RetAjaxOut.Error = true;
+                RetAjaxOut.InfoMessage = ex.Message.ToString();
+                RetAjaxOut.HtmlContent = ex.Message.ToString();
+            }
+            return RetAjaxOut;
+        }
+
+        [AjaxPro.AjaxMethod(AjaxPro.HttpSessionStateRequirement.ReadWrite)]
+        public static AjaxOut ServerSideDelete(RenderInfoCls ORenderInfo, string Id)
+        {
+            AjaxOut RetAjaxOut = new AjaxOut();
+            try
+            {
+                SiteParam OSiteParam = WebEnvironments.CreateSiteParam(ORenderInfo);
+                WebSession.CheckSessionTimeOut(ORenderInfo);
+                List<BangChuyenDoiCls> OChuyenDois = WebSessionUtility.GetSession(OSiteParam, "BangChuyenDois") as List<BangChuyenDoiCls>;
+                BangChuyenDoiCls chuyendoi = OChuyenDois.FirstOrDefault(o => o.ID == Id);
+                OChuyenDois.Remove(chuyendoi);
                 RetAjaxOut.HtmlContent = ServerSideDrawSearchResult(ORenderInfo).HtmlContent;
             }
             catch (Exception ex)
